@@ -13,3 +13,30 @@ __pycache__/
 
 # Logs
 *.log
+
+# SQLite Database (Trade Journal - contains live trade data)
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask session & temp files
+flask_session/
+instance/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# IDE & Editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/

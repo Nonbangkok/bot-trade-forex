@@ -45,3 +45,16 @@ AUTO_TRADE = os.getenv("AUTO_TRADE", "False").lower() in ("true", "1", "t", "yes
 
 # Max Spread ที่อนุญาตให้เปิดออเดอร์ได้ (ในหน่วย Points)
 MAX_SPREAD = int(os.getenv("MAX_SPREAD", "50"))
+
+# ==========================================
+# Web Dashboard & Background Runner Settings
+# ==========================================
+# ระยะเวลาระหว่างการวิเคราะห์ตลาดของบอท (วินาที)
+BOT_INTERVAL = int(os.getenv("BOT_INTERVAL", "60"))
+
+# ค่าความมั่นใจขั้นต่ำของ AI (0-100) ที่จะอนุญาตให้เปิดออเดอร์
+MIN_CONFIDENCE = int(os.getenv("MIN_CONFIDENCE", "70"))
+
+# พอร์ตสำหรับรัน Web Dashboard
+FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
+

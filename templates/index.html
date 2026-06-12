@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaxPlus AI MT5 Trading Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOP HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-robot pulse-icon"></i>
+                <div class="logo-text">
+                    <h1>MAXPLUS<span>AI</span></h1>
+                    <p>MT5 FOREX TRADING BOT</p>
+                </div>
+            </div>
+            
+            <div class="account-summary" id="account-summary">
+                <div class="stat-badge">
+                    <span class="label">ACCOUNT</span>
+                    <span class="value" id="acc-login">Offline</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="label">BALANCE</span>
+                    <span class="value text-highlight" id="acc-balance">$0.00</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="label">EQUITY</span>
+                    <span class="value" id="acc-equity">$0.00</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="label">FREE MARGIN</span>
+                    <span class="value" id="acc-margin">$0.00</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="label">SERVER</span>
+                    <span class="value text-dim" id="acc-server">-</span>
+                </div>
+            </div>
+
+            <div class="status-indicator-wrapper">
+                <span class="status-pill stopped" id="bot-status-pill">
+                    <span class="dot"></span>
+                    <span class="status-text">Stopped</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="app-grid">
+            <!-- LEFT AREA - CHARTS AND ACTIONS -->
+            <section class="left-section">
+                <!-- CHART CARD -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fa-solid fa-chart-line text-blue"></i>
+                            <h2>Market Chart</h2>
+                        </div>
+                        <div class="chart-controls">
+                            <span class="chart-symbol-badge" id="chart-symbol-badge">EURUSD</span>
+                            <span class="chart-tf-badge" id="chart-tf-badge">H4</span>
+                        </div>
+                    </div>
+                    <div class="chart-container-wrapper">
+                        <div id="price-chart" class="price-chart-canvas"></div>
+                    </div>
+                </div>
+
+                <!-- BOT CONTROL PANEL -->
+                <div class="card control-card">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fa-solid fa-sliders text-green"></i>
+                            <h2>Bot Configuration & Controls</h2>
+                        </div>
+                    </div>
+                    <div class="control-grid">
+                        <div class="form-group">
+                            <label for="trading-symbol">Trading Symbol</label>
+                            <select id="trading-symbol" class="form-control">
+                                <option value="EURUSD">EURUSD (Euro / US Dollar)</option>
+                                <option value="GBPUSD">GBPUSD (Great Britain Pound / US Dollar)</option>
+                                <option value="XAUUSD">XAUUSD (Gold / US Dollar)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="trading-timeframe">Timeframe</label>
+                            <select id="trading-timeframe" class="form-control">
+                                <option value="M15">M15 (15 Minutes)</option>
+                                <option value="H1">H1 (1 Hour)</option>
+                                <option value="H4" selected>H4 (4 Hours)</option>
+                                <option value="D1">D1 (1 Day)</option>
+                            </select>
+                        </div>
+                        <div class="action-buttons-group">
+                            <button id="btn-start" class="btn btn-success">
+                                <i class="fa-solid fa-play"></i> Start Bot
+                            </button>
+                            <button id="btn-stop" class="btn btn-danger" disabled>
+                                <i class="fa-solid fa-stop"></i> Stop Bot
+                            </button>
+                            <button id="btn-analyze" class="btn btn-secondary">
+                                <i class="fa-solid fa-bolt"></i> Analyze Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT AREA - LOGIN, DECISIONS, AND STATS -->
+            <section class="right-section">
+                <!-- MT5 LOGIN CARD -->
+                <div class="card login-card" id="mt5-login-card">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fa-solid fa-key text-yellow"></i>
+                            <h2>Connect to MetaTrader 5</h2>
+                        </div>
+                    </div>
+                    <form id="login-form" class="login-form">
+                        <div class="form-group">
+                            <label for="mt5-server">MT5 Broker Server</label>
+                            <input type="text" id="mt5-server" class="form-control" placeholder="เช่น Pepperstone-Demo" required value="Pepperstone-Demo">
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="mt5-login">Login ID</label>
+                                <input type="number" id="mt5-login" class="form-control" placeholder="เลขที่บัญชี" required value="888888">
+                            </div>
+                            <div class="form-group">
+                                <label for="mt5-password">Password</label>
+                                <input type="password" id="mt5-password" class="form-control" placeholder="รหัสผ่าน" required value="Password123">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="btn-login-submit">
+                            <i class="fa-solid fa-link"></i> Connect Terminal
+                        </button>
+                    </form>
+                </div>
+
+                <!-- AI REAL-TIME ANALYSIS -->
+                <div class="card analyst-card">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fa-solid fa-brain text-purple"></i>
+                            <h2>AI Trading Analyst</h2>
+                        </div>
+                        <span class="update-time" id="ai-update-time">Last update: -</span>
+                    </div>
+                    <div class="analyst-content">
+                        <div class="decision-display">
+                            <div class="decision-box hold" id="ai-decision-box">HOLD</div>
+                            <div class="confidence-box">
+                                <span class="label">Confidence</span>
+                                <span class="value" id="ai-confidence">0%</span>
+                            </div>
+                        </div>
+                        <div class="reasoning-box">
+                            <p class="section-label">Technical Analysis Reasoning:</p>
+                            <div class="reasoning-text" id="ai-reasoning-text">
+                                รอรับสัญญาณการวิเคราะห์ตลาดรอบถัดไป หรือกดปุ่ม "Analyze Now" ด้านซ้ายเพื่อส่งข้อมูลให้ AI ประเมินทันที
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI LEARNING NOTES -->
+                <div class="card learning-card">
+                    <div class="card-header">
+                        <div class="header-title">
+                            <i class="fa-solid fa-graduation-cap text-teal"></i>
+                            <h2>AI Self-Learning Notes</h2>
+                        </div>
+                        <button id="btn-learn-generate" class="btn-icon" title="Force AI to analyze and generate learning notes"><i class="fa-solid fa-sync"></i></button>
+                    </div>
+                    <div class="learning-content">
+                        <div class="learning-notes-display" id="learning-notes-display">
+                            ยังไม่มีข้อมูลการเรียนรู้ เนื่องจากจำนวนออเดอร์สะสมที่ปิดแล้วยังมีไม่เพียงพอ (ต้องการอย่างน้อย 5 ออเดอร์ขึ้นไป)
+                        </div>
+                        <div class="learning-meta">
+                            <span>อัปเดตล่าสุด: <strong id="learning-time">-</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- PERFORMANCE STATS SECTION -->
+        <section class="performance-stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-briefcase"></i></div>
+                <div class="stat-info">
+                    <span class="label">Total Trades</span>
+                    <span class="value" id="stat-total-trades">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon text-green"><i class="fa-solid fa-percentage"></i></div>
+                <div class="stat-info">
+                    <span class="label">Win Rate</span>
+                    <span class="value text-green" id="stat-win-rate">0%</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" id="stat-pnl-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                <div class="stat-info">
+                    <span class="label">Net Profit / Loss</span>
+                    <span class="value" id="stat-net-pnl">$0.00</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon text-orange"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="stat-info">
+                    <span class="label">Avg Risk / Reward</span>
+                    <span class="value text-orange" id="stat-avg-rr">0.00</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOTTOM AREA: TRADES AND REALTIME LOGS -->
+        <footer class="app-footer-grid">
+            <!-- JOURNAL HISTORY -->
+            <div class="card journal-card">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i class="fa-solid fa-book-journal-whills text-blue"></i>
+                        <h2>Trade Journal & History</h2>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="trade-table" id="trade-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Timestamp</th>
+                                <th>Symbol</th>
+                                <th>Action</th>
+                                <th>Entry Price</th>
+                                <th>SL</th>
+                                <th>TP</th>
+                                <th>Exit Price</th>
+                                <th>P&L ($)</th>
+                                <th>Outcome</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trade-history-rows">
+                            <!-- Rows will be injected by JavaScript -->
+                            <tr>
+                                <td colspan="11" class="text-center">ไม่พบประวัติการเทรดในฐานข้อมูล</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- BOT CONSOLE LOGS -->
+            <div class="card log-card">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i class="fa-solid fa-terminal text-green"></i>
+                        <h2>Live Console Logs</h2>
+                    </div>
+                    <button id="btn-clear-logs" class="btn-clear-logs">Clear Logs</button>
+                </div>
+                <div class="log-console-wrapper">
+                    <div class="log-console" id="log-console">
+                        <div class="log-row info">Ready. Waiting for bot activation...</div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Main JavaScript App -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
