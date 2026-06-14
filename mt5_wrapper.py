@@ -89,6 +89,9 @@ class MockMT5:
         print("[MOCK MT5] Shutdown connection.")
         return None
 
+    def last_error(self):
+        return (0, "No error (Mock Mode)")
+
     class MockAccountInfo:
         def __init__(self, login, balance, equity, margin_free):
             self.login = login
@@ -290,11 +293,14 @@ if IS_WINDOWS:
         def initialize(self, *args, **kwargs):
             # If called with no arguments, inject stored credentials
             if not args and not kwargs and self._login is not None:
-                return _mt5_real.initialize(
+                result = _mt5_real.initialize(
                     login=self._login,
                     password=self._password,
                     server=self._server
                 )
+                if not result:
+                    print(f"[MT5 Wrapper] initialize() failed: {_mt5_real.last_error()}")
+                return result
             return _mt5_real.initialize(*args, **kwargs)
 
         def __getattr__(self, name):

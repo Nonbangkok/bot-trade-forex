@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # นำเข้าองค์ประกอบต่างๆ ของโปรเจกต์
 import config
@@ -132,7 +132,13 @@ class TradingBot(threading.Thread):
         
         # 1. เชื่อมต่อ MT5
         if not mt5.initialize():
-            self.log_message("❌ ไม่สามารถเชื่อมต่อกับ MT5 Terminal ได้")
+            err_detail = ""
+            try:
+                err_detail = f" | MT5 Error: {mt5.last_error()}"
+            except Exception:
+                pass
+            self.log_message(f"❌ ไม่สามารถเชื่อมต่อกับ MT5 Terminal ได้{err_detail}")
+            self.log_message("💡 ตรวจสอบ: MT5 Terminal เปิดอยู่หรือไม่? ชื่อ Server ใน .env ถูกต้องหรือไม่?")
             return
 
         try:
@@ -296,8 +302,10 @@ class TradingBot(threading.Thread):
                 
                 # หากใช้งานบน Windows ค้นหาดีลจริง
                 if mt5.IS_WINDOWS:
-                    import MetaTrader5 as mt5_real
-                    history_deals = mt5_real.history_deals_get(ticket=ticket)
+                    # history_deals_get ต้องการ date range และ position ID (= order ticket สำหรับ market orders)
+                    from_date = datetime(2020, 1, 1)
+                    to_date = datetime.now() + timedelta(days=1)
+                    history_deals = mt5.history_deals_get(from_date, to_date, position=ticket)
                     if history_deals and len(history_deals) > 0:
                         close_deal = None
                         for deal in history_deals:
@@ -307,7 +315,8 @@ class TradingBot(threading.Thread):
                         if close_deal:
                             exit_price = close_deal.price
                             pnl_usd = close_deal.profit
-                            pip_size = get_pip_size(trade['symbol'], mt5_real.symbol_info(trade['symbol']).digits)
+                            sym_info = mt5.symbol_info(trade['symbol'])
+                            pip_size = get_pip_size(trade['symbol'], sym_info.digits if sym_info else 5)
                             pnl_pips = (exit_price - trade['entry_price']) / pip_size if trade['action'] == 'BUY' else (trade['entry_price'] - exit_price) / pip_size
                             outcome = 'WIN' if pnl_usd > 0 else ('LOSS' if pnl_usd < 0 else 'BE')
                 else:
