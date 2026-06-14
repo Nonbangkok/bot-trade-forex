@@ -27,7 +27,11 @@ def get_or_create_bot():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html',
+        mt5_server=config.MT5_SERVER,
+        mt5_login=config.MT5_LOGIN,
+        mt5_password=config.MT5_PASSWORD
+    )
 
 @app.route('/api/mt5/login', methods=['POST'])
 def mt5_login():

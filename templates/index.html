@@ -133,16 +133,16 @@
                     <form id="login-form" class="login-form">
                         <div class="form-group">
                             <label for="mt5-server">MT5 Broker Server</label>
-                            <input type="text" id="mt5-server" class="form-control" placeholder="เช่น Pepperstone-Demo" required value="Pepperstone-Demo">
+                            <input type="text" id="mt5-server" class="form-control" placeholder="เช่น IUXMarketsMU-Demo" required value="{{ mt5_server }}">
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="mt5-login">Login ID</label>
-                                <input type="number" id="mt5-login" class="form-control" placeholder="เลขที่บัญชี" required value="888888">
+                                <input type="text" id="mt5-login" class="form-control" placeholder="เลขที่บัญชี" required value="{{ mt5_login }}">
                             </div>
                             <div class="form-group">
                                 <label for="mt5-password">Password</label>
-                                <input type="password" id="mt5-password" class="form-control" placeholder="รหัสผ่าน" required value="Password123">
+                                <input type="password" id="mt5-password" class="form-control" placeholder="รหัสผ่าน" required value="{{ mt5_password }}">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block" id="btn-login-submit">

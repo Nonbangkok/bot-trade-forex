@@ -272,12 +272,35 @@ class MockMT5:
 # โหลดโมดูลจริงหรือจำลองตามระบบปฏิบัติการ
 if IS_WINDOWS:
     try:
-        import MetaTrader5 as mt5
+        import MetaTrader5 as _mt5_real
         print("[MT5 Wrapper] Successfully imported real MetaTrader5 library.")
     except ImportError:
         print("[MT5 Wrapper] ERROR: Running on Windows but 'MetaTrader5' library is not installed.")
         print("[MT5 Wrapper] Please run: pip install MetaTrader5")
         sys.exit(1)
+
+    class _RealMT5Wrapper:
+        """Wraps the real MetaTrader5 module so that initialize() always
+        re-uses stored credentials — fixing reconnection after shutdown()."""
+        IS_WINDOWS = True
+        _login = None
+        _password = None
+        _server = None
+
+        def initialize(self, *args, **kwargs):
+            # If called with no arguments, inject stored credentials
+            if not args and not kwargs and self._login is not None:
+                return _mt5_real.initialize(
+                    login=self._login,
+                    password=self._password,
+                    server=self._server
+                )
+            return _mt5_real.initialize(*args, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(_mt5_real, name)
+
+    mt5 = _RealMT5Wrapper()
 else:
     # ใช้งานคลาสจำลองสำหรับ macOS
     mt5 = MockMT5()
@@ -295,18 +318,23 @@ def initialize_with_login(server, login, password):
         mt5.login_id = int(login)
         mt5.server_name = server
         return True
-        
+
     try:
         login_int = int(login)
     except ValueError:
         print("[MT5 Wrapper] Invalid Login ID (must be integer)")
         return False
-        
+
+    # Store credentials so every future initialize() call reuses them
+    mt5._login = login_int
+    mt5._password = password
+    mt5._server = server
+
     # ล็อกอินจริงบนระบบ Windows
-    if not mt5.initialize(login=login_int, password=password, server=server):
-        print(f"[MT5 Wrapper] Failed to initialize MT5 login: {mt5.last_error()}")
+    if not _mt5_real.initialize(login=login_int, password=password, server=server):
+        print(f"[MT5 Wrapper] Failed to initialize MT5 login: {_mt5_real.last_error()}")
         return False
-        
+
     return True
 
 def get_account_summary():

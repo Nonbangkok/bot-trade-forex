@@ -15,6 +15,13 @@ MAXPLUS_BASE_URL = os.getenv("MAXPLUS_BASE_URL", "https://api.maxplus-ai.cc/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
 # ==========================================
+# MT5 Credentials (pre-filled in the dashboard login form)
+# ==========================================
+MT5_SERVER = os.getenv("MT5_SERVER", "")
+MT5_LOGIN = os.getenv("MT5_LOGIN", "")
+MT5_PASSWORD = os.getenv("MT5_PASSWORD", "")
+
+# ==========================================
 # Trading Parameters
 # ==========================================
 # คู่เงินที่ต้องการเทรด (เช่น EURUSD, GBPUSD, XAUUSD)
