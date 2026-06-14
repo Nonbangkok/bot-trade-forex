@@ -27,7 +27,7 @@ function initChart() {
         width: chartContainer.clientWidth,
         height: 380,
         layout: {
-            backgroundColor: '#131722',
+            background: { type: LightweightCharts.ColorType.Solid, color: '#131722' },
             textColor: '#d1d4dc',
             fontSize: 11,
             fontFamily: "'Inter', sans-serif"
@@ -50,7 +50,7 @@ function initChart() {
         }
     });
 
-    candleSeries = chart.addCandlestickSeries({
+    candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
         upColor: '#26a69a',
         downColor: '#ef5350',
         borderDownColor: '#ef5350',

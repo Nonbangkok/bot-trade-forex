@@ -55,6 +55,6 @@ BOT_INTERVAL = int(os.getenv("BOT_INTERVAL", "60"))
 # ค่าความมั่นใจขั้นต่ำของ AI (0-100) ที่จะอนุญาตให้เปิดออเดอร์
 MIN_CONFIDENCE = int(os.getenv("MIN_CONFIDENCE", "70"))
 
-# พอร์ตสำหรับรัน Web Dashboard
-FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
+# พอร์ตสำหรับรัน Web Dashboard (PORT takes precedence to support preview tools)
+FLASK_PORT = int(os.getenv("PORT") or os.getenv("FLASK_PORT", "5000"))
 
