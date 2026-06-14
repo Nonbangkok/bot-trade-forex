@@ -382,39 +382,6 @@ function setupEventListeners() {
         }
     });
 
-    // Connect MT5 Form Submit
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const server = document.getElementById('mt5-server').value;
-        const login = document.getElementById('mt5-login').value;
-        const password = document.getElementById('mt5-password').value;
-
-        const btnSubmit = document.getElementById('btn-login-submit');
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
-
-        try {
-            const res = await fetch('/api/mt5/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ server, login, password })
-            });
-            const data = await res.json();
-            
-            appendLog(data.message, data.success ? 'info' : 'error');
-            
-            if (data.success) {
-                updateAccountUI(data.account);
-            }
-        } catch (err) {
-            console.error('Error logging in:', err);
-            appendLog('❌ Error connecting to MT5 endpoint.', 'error');
-        } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = '<i class="fa-solid fa-link"></i> Connect Terminal';
-        }
-    });
-
     // Manual Force Learning
     document.getElementById('btn-learn-generate').addEventListener('click', async () => {
         try {

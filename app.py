@@ -27,31 +27,7 @@ def get_or_create_bot():
 
 @app.route('/')
 def index():
-    return render_template('index.html',
-        mt5_server=config.MT5_SERVER,
-        mt5_login=config.MT5_LOGIN,
-        mt5_password=config.MT5_PASSWORD
-    )
-
-@app.route('/api/mt5/login', methods=['POST'])
-def mt5_login():
-    data = request.json or {}
-    server = data.get('server')
-    login = data.get('login')
-    password = data.get('password')
-    
-    if not server or not login or not password:
-        return jsonify({"success": False, "message": "ข้อมูลไม่ครบถ้วน กรุณากรอกข้อมูลให้ครบทุกช่อง"}), 400
-        
-    logging.info(f"Attempting login to MT5 server {server} with account {login}")
-    success = initialize_with_login(server, login, password)
-    
-    if success:
-        summary = get_account_summary()
-        socketio.emit('account_update', summary)
-        return jsonify({"success": True, "message": "เชื่อมต่อ MT5 สำเร็จ", "account": summary})
-    else:
-        return jsonify({"success": False, "message": "ไม่สามารถล็อกอินหรือเชื่อมต่อ MT5 ได้ กรุณาตรวจสอบข้อมูลอีกครั้ง"})
+    return render_template('index.html')
 
 @app.route('/api/mt5/status', methods=['GET'])
 def mt5_status():
@@ -179,9 +155,20 @@ def generate_learning():
     return jsonify({"success": True, "message": "กำลังสร้างรายงานผลการเทรดด้วย AI..."})
 
 if __name__ == '__main__':
-    # สั่งสร้างฐานข้อมูล SQLite
     database.init_db()
-    
-    # รันเว็บเซิร์ฟเวอร์
+
+    # Auto-login to MT5 at startup using .env credentials
+    if config.MT5_SERVER and config.MT5_LOGIN and config.MT5_PASSWORD:
+        logging.info(f"[Startup] Connecting to MT5: {config.MT5_SERVER} ({config.MT5_LOGIN})")
+        ok = initialize_with_login(config.MT5_SERVER, config.MT5_LOGIN, config.MT5_PASSWORD)
+        if ok:
+            logging.info("[Startup] ✅ MT5 connected successfully")
+        else:
+            logging.warning("[Startup] ⚠️ MT5 connection failed — check MT5_SERVER/MT5_LOGIN/MT5_PASSWORD in .env")
+    else:
+        logging.warning("[Startup] ⚠️ MT5 credentials not set in .env (MT5_SERVER, MT5_LOGIN, MT5_PASSWORD)")
+
     port = config.FLASK_PORT
-    socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
+    # use_reloader=False prevents double-init of MT5 connection in debug mode
+    socketio.run(app, host='0.0.0.0', port=port, debug=True,
+                 allow_unsafe_werkzeug=True, use_reloader=False)

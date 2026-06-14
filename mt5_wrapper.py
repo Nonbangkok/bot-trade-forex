@@ -341,7 +341,9 @@ def get_account_summary():
     """
     ดึงข้อมูลบาลานซ์และสถานะการลงทุนปัจจุบัน
     """
+    mt5.initialize()  # re-uses stored credentials on Windows; no-op on mock
     acc = mt5.account_info()
+    mt5.shutdown()
     if acc is None:
         return {
             "login": 0,

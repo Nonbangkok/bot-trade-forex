@@ -152,7 +152,9 @@ class TradingBot(threading.Thread):
                     'balance': account.balance,
                     'equity': account.equity,
                     'margin_free': account.margin_free,
-                    'currency': getattr(account, "currency", "USD")
+                    'currency': getattr(account, "currency", "USD"),
+                    'server': getattr(account, 'server', config.MT5_SERVER),
+                    'connected': True,
                 })
 
             # 4. ตรวจสอบการเปิดตำแหน่งซื้อขายค้างไว้ (ป้องกันการเปิดออเดอร์ซ้ำซ้อน)
@@ -277,8 +279,8 @@ class TradingBot(threading.Thread):
         if not open_trades:
             return
             
-        # ดึง active positions จาก MT5
-        active_positions = mt5.positions_get()
+        # ดึง active positions จาก MT5 (positions_get อาจ return None บน Windows เมื่อเชื่อมต่อล้มเหลว)
+        active_positions = mt5.positions_get() or []
         active_tickets = {pos.ticket for pos in active_positions}
         
         for trade in open_trades:
